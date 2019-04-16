@@ -1,0 +1,16 @@
+# This is a short version on how to make terraform spin up an ec2 instance
+# Remember that you need to create a .tf file to run it. (Example: Ansible_Instance.tf)
+#you can add more functions to customize the instance: (Need to learn)
+# GitHUb" https://github.com/ravsau/aws-labs/tree/master/terraform-aws
+# youtube: https://www.youtube.com/watch?v=RA1mNClGYJ4
+
+provider "aws" {
+  access_key = "ACCESS_KEY_HERE"
+  secret_key = "SECRET_KEY_HERE"
+  region     = "us-east-1"
+}
+
+resource "aws_instance" "example" {
+  ami           = "ami-2757f631"
+  instance_type = "t2.micro"
+}

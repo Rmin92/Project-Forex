@@ -1,0 +1,78 @@
+#forex second ec2 instance on aws
+# Youtube: https://www.youtube.com/watch?v=v5EGu9HKKfo
+# Demo playbook for setting up first EC2 instance
+# 1) Create a Custom Security group
+# 2) spin up new EC2 instance
+# 3) waits for ssh to become active on instance
+#
+# Version 1.0 Ray Min 4/11/19
+#
+
+- host: localhost
+  tasks:
+
+    - name: setting up aws_security_group
+      ec2_group:
+          name: weebs_AWS_Security_Grp
+          description: rules allowing traffic on port 22/80/443
+          region: us-east-2b
+          rules:
+            - proto: tcp
+              from_port: 80
+              to_port: 80
+              cidr_ip: 0.0.0.0/0
+            - proto: tcp
+              from_port: 22
+              to_port: 22
+              cidr_ip: 0.0.0.0/0
+            - proto: tcp
+              from_port: 443
+              to_port: 443
+              cidr_ip: 0.0.0.0/0
+            rules_egress: # This just defines what traffic is not allowed. In this case anything other then the ones above
+              - proto: all
+                cidr_ip: 0.0.0.0/0
+
+   - name: Provision an EC2 Ansible Instance
+     ec2:
+         key_name: weebs-key
+         region: us-east-2b
+         instance_type: t2.micro
+         image: ami-0c55b159cbfafe1f0
+         wait: yes
+         wait_timeout: 500
+         count: 1
+         instance_tags:
+           name: Ansible-Server
+           owner: weebs
+        monitoring: no
+        vpc_subnet_id: #dont know where to get this
+        assign_public_ip: yes
+        group: weebs_AWS_Security_Grp
+      register: ec2_out
+
+    - name: wait for SSH to come up
+      wait_for: host={{ item.public_dns_name }} port=22 delay=60 timeout=320 state=started
+      with_item: '{{ec2_out.instance}}'
+
+   - name: Provision an EC2 Jenkins Instance
+     ec2:
+         key_name: weebs-key
+         region: us-east-2b
+         instance_type: t2.micro
+         image: ami-0c55b159cbfafe1f0
+         wait: yes
+         wait_timeout: 500
+         count: 1
+         instance_tags:
+           name: Jenkins-Server
+           owner: weebs
+        monitoring: no
+        vpc_subnet_id: #dont know where to get this
+        assign_public_ip: yes
+        group: weebs_AWS_Security_Grp
+      register: ec2_out2
+
+    - name: wait for SSH to come up
+      wait_for: host={{ item.public_dns_name }} port=22 delay=60 timeout=320 state=started
+      with_item: '{{ec2_out2.instance}}'
